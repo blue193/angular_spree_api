@@ -1,0 +1,54 @@
+<% content_for :page_title do %>
+  <%= link_to Spree.t(:line_item_option_types), spree.admin_line_item_option_types_url %> /
+  <%= @line_item_option_type.name %>
+<% end %>
+
+<% content_for :page_actions do %>
+  <span id="new_add_line_item_option_value" data-hook>
+    <%= button_link_to Spree.t(:add_line_item_option_value), "javascript:;", { :icon => 'add', :'data-target' => "tbody#line_item_option_values", :class => 'btn-success spree_add_fields' } %>
+  </span>
+<% end %>
+
+<%= render :partial => 'spree/admin/shared/error_messages', :locals => { :target => @line_item_option_type } %>
+
+<%= form_for [:admin, @line_item_option_type] do |f| %>
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h1 class="panel-title">
+        <%= Spree.t(:line_item_option_values) %>
+      </h1>
+    </div>
+    <div class="panel-body">
+      <%= render :partial => 'form', :locals => { :f => f, :line_item_option_type => @line_item_option_type } %>
+    </div>
+
+    <!-- Show LIOVs only when input_type == 'selection' -->
+    <% if @line_item_option_type.selection? %>
+      <table class="table table-condensed table-bordered sortable" data-hook data-sortable-link="<%= update_values_positions_admin_line_item_option_types_url %>">
+        <thead data-hook="line_item_option_header">
+          <tr>
+            <th colspan="2"><%= Spree.t(:name) %> <span class="required">*</span></th>
+            <th><%= Spree.t(:display) %> <span class="required">*</span></th>
+            <th class="actions"></th>
+          </tr>
+        </thead>
+        <tbody id="line_item_option_values">
+          <% if @line_item_option_type.line_item_option_values.empty? %>
+            <tr id="none" data-hook="option_none">
+              <td colspan="2"><%= Spree.t(:none) %></td>
+              <td class="actions text-center"></td>
+            </tr>
+          <% else %>
+            <%= f.fields_for :line_item_option_values do |line_item_option_value_form| %>
+              <%= render :partial => 'line_item_option_value_fields', :locals => { :f => line_item_option_value_form } %>
+            <% end %>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+
+    <div class="panel-footer text-center">
+      <%= render :partial => 'spree/admin/shared/edit_resource_links' %>
+    </div>
+  </div>
+<% end %>

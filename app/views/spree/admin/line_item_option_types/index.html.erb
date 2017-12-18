@@ -1,0 +1,48 @@
+<% content_for :page_title do %>
+  <%= Spree.t(:line_item_option_types) %>
+<% end %>
+
+<% content_for :page_actions do %>
+  <span id="new_liot_link">
+    <%= button_link_to Spree.t(:new_line_item_option_type), new_object_url, { class: "btn-success", icon: 'add', id: 'new_line_item_option_type_link' } %>
+  </span>
+<% end %>
+
+<div id="new_line_item_option_type"></div>
+
+<% if @line_item_option_types.any? %>
+<table class="table sortable" id="listing_line_item_option_types" data-hook data-sortable-link="<%= update_positions_admin_line_item_option_types_url %>">
+  <thead>
+    <tr data-hook="line_item_option_header">
+      <th class="no-border"></th>
+      <th><%= Spree.t(:name) %></th>
+      <th><%= Spree.t(:presentation) %></th>
+      <th><%= Spree.t(:description) %></th>
+      <th><%= Spree.t(:input_type) %></th>
+      <th class="actions"></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @line_item_option_types.each do |line_item_option_type| %>
+      <tr class="spree_option_type <%= cycle('odd', 'even')%>" id="<%= spree_dom_id line_item_option_type %>" data-hook="line_item_option_row">
+        <td class="move-handle text-center">
+          <span class="icon icon-move handle"></span>
+        </td>
+        <td><%= line_item_option_type.name %></td>
+        <td class="presentation"><%= line_item_option_type.presentation %></td>
+        <td class="presentation"><%= line_item_option_type.description %></td>
+        <td class="presentation"><%= line_item_option_type.input_type.titleize %></td>
+        <td class="actions actions-2 text-right">
+          <%= link_to_edit(line_item_option_type, class: 'admin_edit_line_item_option_type', no_text: true) %>
+          <%= link_to_delete(line_item_option_type, no_text: true) %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+<% else %>
+  <div class="alert alert-info no-objects-found">
+    <%= Spree.t(:no_resource_found, resource: plural_resource_name(Spree::LineItemOptionType)) %>,
+    <%= link_to Spree.t(:add_one), new_object_url %>!
+  </div>
+<% end %>

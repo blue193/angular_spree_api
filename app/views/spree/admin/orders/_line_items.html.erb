@@ -1,0 +1,177 @@
+<% if order.line_items.exists? %>
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h1 class="panel-title">
+          <%= Spree.t(:order_line_items) %>
+        </h1>
+      </div>
+      <table class="table table-bordered line-items" data-hook="line-items">
+        <thead>
+        <th colspan="2"><%= Spree.t(:name) %></th>
+        <th class="text-center"><%= Spree.t(:price) %></th>
+        <th class="text-center"><%= Spree.t(:quantity) %></th>
+        <th class="text-center"><%= Spree.t(:total_price) %></th>
+        <th class="text-center"><%= Spree.t(:detail_records) %></th>
+        <th class="orders-actions text-center" data-hook="admin_order_form_line_items_header_actions"></th>
+        </thead>
+        <tbody>
+        <% order.line_items.each do |item| %>
+            <tr class="line-item" id="line-item-<%= item.id %>">
+              <td class="line-item-image image text-center">
+                <%= mini_image(item.variant) %>
+              </td>
+              <td class="line-item-name text-center">
+                <%= item.variant.product.name %><br><%= "(" + variant_options(item.variant) + ")" unless item.variant.option_values.empty? %>
+              </td>
+              <td class="line-item-price text-center"><%= item.single_money.to_html %></td>
+
+              <td class="line-item-qty-show text-center">
+                <%= item.quantity %>
+              </td>
+              <td class="line-item-qty-edit is-hidden">
+                <%= number_field_tag :quantity, item.quantity, min: 0, class: "line_item_quantity form-control", size: 5 %>
+              </td>
+
+              <td class="line-item-total text-center"><%= line_item_shipment_price(item, item.quantity) %></td>
+
+              <!-- add LineItemDetailRecords -->
+              <td class="line-item-order-details-show text-center">
+                <% if item.line_item_detail_records.any? %>
+                  <% item.line_item_detail_records.each do |lidr| %>
+                    <div class="well well-sm">
+                      <% if item.line_item_detail_records.count > 1 %>
+                        <h5>Detail Record <%= lidr.position %>:</h5>
+                      <% end %>
+
+                      <% lidr.line_item_option_value_detail_records.each do |liovdr| %>
+                        <div>
+                          <span><%= liovdr.line_item_option_value.line_item_option_type.presentation %></span>:
+
+                          <% if liovdr.line_item_option_value.line_item_option_type.selection? %>
+                            <span><%= liovdr.line_item_option_value.presentation %></span>
+                          <% end %>
+
+                          <% if liovdr.line_item_option_value.line_item_option_type.text? %>
+                            <span><%= liovdr.text %></span>
+                          <% end %>
+
+                          <% if liovdr.line_item_option_value.line_item_option_type.file? %>
+                              <% liovdr.line_item_option_value_detail_record_documents.each do |doc| %>
+                                <div data-line-item-option-value-detail-record-document-id="<%= doc.id %>">
+                                  <span><%= doc.name %></span>
+                                </div>
+                              <% end %>
+                          <% end %>
+
+                        </div>
+                      <% end %>
+                    </div>
+                  <% end %>
+                <% else %>
+                  <div>
+                    <%= Spree.t('none') %>
+                  </div>
+                <% end %>
+              </td>
+              <td class="line-item-order-details-edit is-hidden">
+                <% if item.line_item_detail_records.any? %>
+                  <% item.line_item_detail_records.each do |lidr| %>
+                    <div class="well well-sm">
+                      <% if item.line_item_detail_records.count > 1 %>
+                        <h5>Detail Record <%= lidr.position %>:</h5>
+                      <% end %>
+
+                      <% lidr.line_item_option_value_detail_records.each do |liovdr| %>
+
+                          <span><%= liovdr.line_item_option_value.line_item_option_type.presentation %></span>:
+
+                          <% if liovdr.line_item_option_value.line_item_option_type.selection? %>
+                            <% liovs = Spree::LineItemOptionType.find_by_id(liovdr.line_item_option_value.line_item_option_type.id).line_item_option_values %>
+                            <%= collection_select(:line_item_option_value_detail_record,
+                                                  :line_item_detail_record_id,
+                                                  liovs,
+                                                  :id,
+                                                  :presentation,
+                                                  { selected: liovdr.line_item_option_value_id },
+                                                  {
+                                                    class: 'select2',
+                                                    'data-li-id' => item.id,
+                                                    'data-lidr-position' => lidr.position,
+                                                    'data-liov-input-type' => liovdr.line_item_option_value.line_item_option_type.input_type,
+                                                    'data-liovdr-id' => liovdr.id,
+                                                    'data-liov-id' => liovdr.line_item_option_value_id
+                                                  }) %>
+                          <% end %>
+
+                          <% if liovdr.line_item_option_value.line_item_option_type.text? %>
+                              <%= text_field_tag 'line_item_option_value_detail_record_text',
+                                                 liovdr.text,
+                                                 {
+                                                   class: 'form-control',
+                                                   'data-li-id' => item.id,
+                                                   'data-lidr-position' => lidr.position,
+                                                   'data-liov-input-type' => liovdr.line_item_option_value.line_item_option_type.input_type,
+                                                   'data-liovdr-id' => liovdr.id,
+                                                   'data-liov-id' => liovdr.line_item_option_value_id
+                                                 } %>
+                          <% end %>
+
+                          <% if liovdr.line_item_option_value.line_item_option_type.file? %>
+                              <% liovdr.line_item_option_value_detail_record_documents.each do |doc| %>
+                                  <div data-line-item-option-value-detail-record-document-id="<%= doc.id %>">
+                                    <span><%= doc.name %></span>
+                                    <%= link_to_with_icon 'delete',
+                                                          Spree.t('delete'),
+                                                          "#",
+                                                          class: 'delete-line-item-option-value-detail-record-document btn btn-danger btn-sm',
+                                                          data: { 'line-item-option-value-detail-record-document-id' => doc.id, action: 'remove'},
+                                                          title: Spree.t('delete'),
+                                                          no_text: true %>
+                                  </div>
+                              <% end %>
+                              <div>Add New Case File: </div>
+                              <%= file_field_tag 'line_item_option_value_detail_record_file',
+                                                 {
+                                                     class: 'line_item_option_value_detail_record_file_input',
+                                                     'data-li-id' => item.id,
+                                                     'data-lidr-position' => lidr.position,
+                                                     'data-liov-input-type' => liovdr.line_item_option_value.line_item_option_type.input_type,
+                                                     'data-liovdr-id' => liovdr.id,
+                                                     'data-liov-id' => liovdr.line_item_option_value_id
+                                                 } %>
+                              <%= button_tag "Upload",
+                                             {
+                                                 class: 'line_item_option_value_detail_record_file_upload',
+                                                 'data-li-id' => item.id,
+                                                 'data-lidr-position' => lidr.position,
+                                                 'data-liov-input-type' => liovdr.line_item_option_value.line_item_option_type.input_type,
+                                                 'data-liovdr-id' => liovdr.id,
+                                                 'data-liov-id' => liovdr.line_item_option_value_id
+                                             } %>
+
+                          <% end %>
+
+                      <% end %>
+                    </div>
+                  <% end %>
+                <% else %>
+                    <div>
+                      <%= Spree.t('none') %>
+                    </div>
+                <% end %>
+              </td>
+
+              <td class="cart-line-item-delete actions actions-4 text-center" data-hook="cart_line_item_delete">
+                <% if can? :update, item %>
+                    <%= link_to_with_icon 'arrow-left', Spree.t('actions.cancel'), "#", class: 'cancel-line-item btn btn-default btn-sm', data: {action: 'cancel'}, title: Spree.t('actions.cancel'), style: 'display: none', no_text: true %>
+                    <%= link_to_with_icon 'save', Spree.t('actions.save'), "#", class: 'save-line-item btn btn-success btn-sm', no_text: true, data: { :'line-item-id' => item.id, action: 'save'}, title: Spree.t('actions.save'), style: 'display: none' %>
+                    <%= link_to_with_icon 'edit', Spree.t('edit'), "#", class: 'edit-line-item btn btn-primary btn-sm', data: {action: 'edit'}, title: Spree.t('edit'), no_text: true %>
+                    <%= link_to_with_icon 'delete', Spree.t('delete'), "#", class: 'delete-line-item btn btn-danger btn-sm', data: { 'line-item-id' => item.id, action: 'remove'}, title: Spree.t('delete'), no_text: true %>
+                <% end %>
+              </td>
+            </tr>
+        <% end %>
+        </tbody>
+      </table>
+    </div>
+<% end %>
